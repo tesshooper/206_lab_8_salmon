@@ -1,5 +1,5 @@
 ---
-title: "Hooper_Lab 8 - Linear Regression in R"
+title: "Hooper_Lab_8_Linear_Regression"
 author: "Tess Hooper"
 date: "11/21/2018"
 output: html_document
@@ -7,5 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+salmon<- read_csv("salmon_imports_updated.csv")
+
 ```
 
