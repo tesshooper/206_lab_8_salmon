@@ -9,10 +9,199 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+1. Load the tidyverse and read in the data
 ```{r}
 
 library(tidyverse)
-salmon<- read_csv("salmon_imports_updated.csv")
+
+salmon_imports <- read_csv("salmon_imports_updated.csv")
+
+salmon <- salmon_imports %>% 
+  select(year, salmon_fresh)
 
 ```
+
+2. Exploratory Scatterplot
+
+```{r}
+
+salmon_scatter <- ggplot(salmon, aes(x = year, y = salmon_fresh)) +
+  geom_point()
+
+salmon_scatter
+
+# Overall, does it look like describing the relationshiop between year and fresh salmon imports using linear regression makes sense? Do you have any concerns about using linear regression to describe the relationship? 
+
+## It seems like there is a linear relationship between year and salmon imports, except for the fact that there are several outliers.
+
+
+```
+
+
+3. Linear regression in R
+
+```{r}
+
+
+## a. Perform linear regression to describe the trend in total volume of fresh salmon imported to the U.S. from 1990 - 2017.
+
+salmon_model <- lm(salmon_fresh ~ year, data = salmon)
+
+## b. Call the model name to see the intercept and slope for the model. Recall: y = β0 + β1x + e (linear components + error term)
+
+
+salmon_model
+
+#intercept: -14982940 , year 7550
+
+# intercept = y-intercept
+# year = slope
+
+summary(salmon_model)
+
+## c. Write out the model equation, including the actual variables and coefficients instead of β and x/y. For example (these are not the actual model coefficients you’ll find): Imports(tons) = −400 + 25(Year)
+
+# b = -14982940 
+# m = 7550
+
+# y = 7550x - 14982940 (y = salmon imports)
+# Correlation coefficeint = 0.9478 (adjusted R-squared = 0.9458)
+
+
+## d. Think about the model equation that you found to describe trends in salmon imports. In your markdown document, answer the following in 1-sentence each:
+  # • What does the slope mean in the context of this model?
+          # Salmon imports are increasing per year
+
+  # • What does the y-intercept mean in the context of this model? Why is          that concerning? What does this mean about extrapolating this model for       past values? 
+          # The y-intercept is concerning because it is negative. It makes it             impossible to extrapolate because you can't have negative salmon,             or before year 0. You can't have negative salmon at year zero. 
+
+
+```
+
+
+4. Model diagnostics 
+
+```{r}
+
+# Use plot (model_name) to view model diagnostics in the ‘Plots’ tab (press Enter in the Console to contine to subsequent diagnostic plots). Explore the diagnostic plots to answer the following:
+    # • Do residuals appear normally distributed?
+          # Yes 
+    # • Any concerns about heteroscedasticity or outliers?
+          # 
+
+#To view all four diagnostic plots at once (and have them appear in your knitted document), you can use the following:
+    # par(mfrow = c(2,2))
+    # plot(model_name)
+
+plot(salmon_model)
+
+```
+
+
+5. Explore model fit and significance 
+
+```{r}
+
+## Use summary (model_name) to see the detailed model information, including model fit information (e.g. R2 and coefficient standard errors) and statistics. 
+## See the lecture materials to interpret each component. Answer the following:
+    # • Does year significantly predict salmon imports?
+              # YES
+    # • What does the R2 value actually mean in words?
+              # The fraction of variance in y that is explained by x. Tells us how much                      variance in y is explained by x 
+    # • What proportion of the variance in salmon imports is NOT explained by year?
+              # 5 % 
+
+summary(salmon_model)
+
+# H0 - There is no significant correlation between year and salmon imports
+# HA - There IS a significant correlation between year and salmon imports 
+
+```
+
+6. Prepare a final graph 
+
+```{r}
+
+#See the example code below to create a final graph of the linear regression model with the original data, model and 95% confidence interval for predictions.
+# The code and graph shown below are created with:
+    # • An original data frame called ‘salmon’
+    # • . . . which contains x and y variables ‘year’ and ‘salmon_fresh’
+    # • . . . for which a linear model was found, called ‘salmon_model’
+# If your data frame, columns, or model name differ, you’ll need to update accordingly.
+# You should know what each component and argument of this graphics code actually does. Explore (i.e. Google) geom_smooth() to better understand what the plotted CI ribbon actually means, and to see other alternatives within the geom.
+
+# Area within the ribbon is the 95% confidence interval
+
+salmon_final_graph <- ggplot(salmon, aes(x = year, y = salmon_fresh)) +
+geom_point() +
+geom_smooth(method = lm, se = TRUE, size = 0.5, color = "purple") +
+theme_bw() +
+scale_x_continuous(expand = c(0,0), limits = c(1990, 2017)) +
+labs(x = "Year", y = "U.S. Annual Fresh Salmon Imports\n(1,000 pounds)")+
+ggtitle( "Abundance of US Fresh Salmon Imports by Year")+
+theme_classic()
+
+salmon_final_graph
+
+```
+
+7. Make predictions using the model
+
+
+```{r}
+
+new_years <- data.frame (year = c(2022, 2024, 2026, 2028))
+
+future_predict <- predict(salmon_model, newdata = new_years, interval = "confidence")
+future_predict
+
+
+predictions <- data.frame(new_years, future_predict)
+predictions
+
+
+# fit = model fit
+# lwr = lower bound
+# upr = upper bound
+
+```
+
+
+
+8. Find Pearson's r (correlation)
+
+
+```{r}
+
+# Use the cor.test() function to find Pearson’s r for the linear relationship described between year and salmon imports.
+#See ?cor.test to view R documentation in the ‘Help’ window. Notice that the default correlation is Pearson’s r
+# Generally, if you’re trying to explore the correlation between variable_1 and variable_2 in data frame ‘df’, the function syntax is as follows: test_name <- cor.test(df$variable_1, df$variable_2)
+
+salmon_pr <- cor.test(salmon$year, salmon$salmon_fresh)
+salmon_pr
+    
+    # a. Calculate Pearson’s r for the year vs. salmon imports linear trend.
+            # 0.9735387
+
+    # b. In words: Would you describe this as a weak/strong negative/positive correlation?
+            # Strong positive correlation
+
+
+
+```
+
+9. Write a concluding statement about the relationship
+
+Using the document Communicating Results of Basic Linear Regression (posted on GauchoSpace) as a guide, write a final 1 - 2 sentence statement describing the results of your linear regression and Pearson’s r findings.
+
+Good Example 1 (thorough):
+
+“Year significantly predicts US fresh salmon imports (b = -14982940, t(26) = 21.723, p < 2.2e=16) with a strong positive correlation between the two (Pearson’s r = 0.974). The overall model (salmon imports = slope*year+ incercept, in tonnes) explains a significant amount of variance in US salmon imprts (F(1,26) = 471.9, p < 2.2e-16, R2 = 0.9478).”
+
+Good Example 2 (simplified):
+
+“The model (salmon imports = slope*year+ incercept, in tonnes) explains a significant amount of variance in US fresh salmon imports (F(1,26) = 471.9, p < 2.2e-16, R2 = 0.9478, Pearson’s r = 0.974).”
+
+
 
